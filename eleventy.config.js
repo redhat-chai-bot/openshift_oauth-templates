@@ -61,6 +61,7 @@ export default defineConfig(config => {
     config.setIncludesDirectory('_includes');
     config.setLayoutsDirectory('_layouts');
     config.setOutputDirectory('_site');
+    config.addPassthroughCopy({ assets: 'oauth/assets/v1' });
 
     // Markdown only used for repo documentation
     config.ignores.add('*.md')
