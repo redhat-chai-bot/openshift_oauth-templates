@@ -86,7 +86,7 @@ export default defineConfig(config => {
             minifySVG: true,
             removeComments: true,
             removeDefaultTypeAttributes: true,
-            removeUnusedCSS: true,
+            removeUnusedCSS: false,
         })
     });
 
@@ -104,15 +104,17 @@ export default defineConfig(config => {
             if (!styleNode) return;
 
             const css = styleNode.content.join('');
+            // Strip the style tag content from the HTML so we can find vars used outside it
+            const htmlOutsideStyle = content.replace(/<style[^>]*id="c"[^>]*>[\s\S]*?<\/style>/i, '');
+            const scripts = [...content.matchAll(/<script\b[^>]*src="\/oauth\/assets\/v1\/([a-z]+\.js)"/g)]
+                .map(match => ({ raw: fs.readFileSync(`./assets/${match[1]}`, 'utf8'), extension: 'js' }));
             const [result] = await new PurgeCSS().purge({
-                content: [{ raw: content, extension: 'html' }],
+                content: [{ raw: htmlOutsideStyle, extension: 'html' }, ...scripts],
                 css: [{ raw: css }],
                 keyframes: true,
                 variables: true,
             });
 
-            // Strip the style tag content from the HTML so we can find vars used outside it
-            const htmlOutsideStyle = content.replace(/<style[^>]*id="c"[^>]*>[\s\S]*?<\/style>/i, '');
             styleNode.content = [renameVars(result.css, htmlOutsideStyle)];
         }]).process(content);
 
